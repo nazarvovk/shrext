@@ -41,5 +41,3 @@ export const shrext = <T extends SupportedNextFunctions, TMiddlewareContext = ob
   }
   return shrextHandler
 }
-
-export default shrext
