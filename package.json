@@ -1,18 +1,11 @@
 {
   "name": "shrext",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Middleware for Next.js data fetching functions",
   "main": "lib/index.js",
   "files": [
     "lib/**/*"
   ],
-  "type": "module",
-  "exports": {
-    ".": {
-      "import": "./lib/index.js",
-      "require": "./lib/index.js"
-    }
-  },
   "scripts": {
     "prepublishOnly": "pnpm run build",
     "clean": "rm -rf coverage lib node_modules/",
