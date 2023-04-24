@@ -1,4 +1,10 @@
-import type { AfterMiddleware, BeforeMiddleware, NextContextOf, ShrextHandler, SupportedNextFunctions } from './types'
+import type {
+  AfterMiddleware,
+  BeforeMiddleware,
+  NextContextOf,
+  ShrextHandler,
+  SupportedNextFunctions,
+} from './types'
 
 export * from './types'
 

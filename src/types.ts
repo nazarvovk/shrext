@@ -1,4 +1,3 @@
-
 import type { GetServerSideProps, GetStaticPaths, GetStaticProps } from 'next'
 
 export type SupportedNextFunctions = GetServerSideProps | GetStaticPaths | GetStaticProps
