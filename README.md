@@ -4,7 +4,7 @@
 
 
 <p align="center">
-  <img src="./shrext.jpg" />
+  <img src="https://raw.githubusercontent.com/nazarvovk/shrext/main/shrext.jpg" />
 </p>
 
 Simple tool to make composable middleware for Next.js data fetching functions. Inspired by [Middy](https://github.com/middyjs/middy), but like, you know, for Next.js.
