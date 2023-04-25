@@ -1,6 +1,11 @@
 import type { GetServerSideProps, GetStaticPaths, GetStaticProps } from 'next'
+import type { ParsedUrlQuery } from 'querystring'
 
-export type SupportedNextFunctions = GetServerSideProps | GetStaticPaths | GetStaticProps
+export type SupportedNextFunctions<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Props extends { [key: string]: any } = { [key: string]: any },
+  Params extends ParsedUrlQuery = ParsedUrlQuery,
+> = GetServerSideProps<Props, Params> | GetStaticPaths | GetStaticProps
 
 export type NextContextOf<T extends SupportedNextFunctions> = Parameters<T>[0]
 
@@ -10,7 +15,7 @@ export type BeforeMiddleware<
 > = (
   nextContext: NextContextOf<T>,
   ShrextContext: TShrextContext,
-) => void | Promise<void> | ReturnType<T>
+) => void | Promise<void | ReturnType<T>> | ReturnType<T>
 
 export type AfterMiddleware<
   T extends SupportedNextFunctions = SupportedNextFunctions,
