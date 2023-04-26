@@ -1,19 +1,19 @@
 import type {
   AfterMiddleware,
   BeforeMiddleware,
-  NextContextOf,
+  ContextOf,
   ShrextHandler,
-  SupportedNextFunctions,
+  FunctionWithContext,
 } from './types'
 
 export * from './types'
 
-export const shrext = <T extends SupportedNextFunctions, TMiddlewareContext = object>(
-  handler: (ctx: NextContextOf<T>, ShrextContext: TMiddlewareContext) => ReturnType<T>,
+export const shrext = <T extends FunctionWithContext, TMiddlewareContext = object>(
+  handler: (ctx: ContextOf<T>, ShrextContext: TMiddlewareContext) => ReturnType<T>,
 ): ShrextHandler<T, TMiddlewareContext> => {
   const beforeMiddlewares: BeforeMiddleware<T, TMiddlewareContext>[] = []
   const afterMiddlewares: AfterMiddleware<T, TMiddlewareContext>[] = []
-  const shrextHandler: ShrextHandler<T, TMiddlewareContext> = async (nextCtx: NextContextOf<T>) => {
+  const shrextHandler: ShrextHandler<T, TMiddlewareContext> = async (nextCtx: ContextOf<T>) => {
     const middlewareContext = {} as TMiddlewareContext
     for (const beforeMiddleware of beforeMiddlewares) {
       const result = await beforeMiddleware(nextCtx, middlewareContext)
