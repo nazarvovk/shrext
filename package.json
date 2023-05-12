@@ -10,6 +10,7 @@
     "prepublishOnly": "pnpm run build",
     "clean": "rm -rf coverage lib node_modules/",
     "build": "rm -rf lib && rollup -c rollup.config.js",
+    "test": "jest",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "keywords": [
