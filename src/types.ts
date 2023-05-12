@@ -22,7 +22,11 @@ export type AfterMiddleware<
 export type OnErrorMiddleware<
   TFunc extends FunctionWithContext = FunctionWithContext,
   TShrextContext = object,
-> = (error: unknown, shrextContext: TShrextContext, nextContext: ContextOf<TFunc>) => void | Awaited<ReturnType<TFunc>> | Promise<void | Awaited<ReturnType<TFunc>>>
+> = (
+  error: unknown,
+  shrextContext: TShrextContext,
+  nextContext: ContextOf<TFunc>,
+) => void | Awaited<ReturnType<TFunc>> | Promise<void | Awaited<ReturnType<TFunc>>>
 
 export type MiddlewareObject<
   T extends FunctionWithContext = FunctionWithContext,

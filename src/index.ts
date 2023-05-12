@@ -28,7 +28,7 @@ export const shrext = <T extends FunctionWithContext, TMiddlewareContext = objec
         result = await afterMiddleware(result, middlewareContext, nextCtx)
       }
       return result
-    } catch(error){
+    } catch (error) {
       for (const onErrorMiddleware of onErrorMiddlewares) {
         const result = await onErrorMiddleware(error, nextCtx, middlewareContext)
         if (result) return result
