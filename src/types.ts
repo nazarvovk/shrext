@@ -1,54 +1,48 @@
-export type FunctionWithContext<TContext = any, TReturn = any> = (context: TContext) => TReturn
+export type AnyFunc = (...args: any[]) => any
 
-export type ContextOf<T extends FunctionWithContext> = Parameters<T>[0]
-
-export type BeforeMiddleware<
-  TFunc extends FunctionWithContext = FunctionWithContext,
-  TShrextContext = object,
-> = (
-  context: ContextOf<TFunc>,
-  shrextContext: TShrextContext,
-) => void | Promise<void | Awaited<ReturnType<TFunc>>>
-
-export type AfterMiddleware<
-  T extends FunctionWithContext = FunctionWithContext,
-  TShrextContext = object,
-> = (
-  prevResult: Awaited<ReturnType<T>>,
-  shrextContext: TShrextContext,
-  nextContext: ContextOf<T>,
-) => ReturnType<T> | Promise<ReturnType<T>>
-
-export type OnErrorMiddleware<
-  TFunc extends FunctionWithContext = FunctionWithContext,
-  TShrextContext = object,
-> = (
-  error: unknown,
-  shrextContext: TShrextContext,
-  nextContext: ContextOf<TFunc>,
-) => void | Awaited<ReturnType<TFunc>> | Promise<void | Awaited<ReturnType<TFunc>>>
-
-export type MiddlewareObject<
-  T extends FunctionWithContext = FunctionWithContext,
-  TShrextContext = object,
-> = {
-  before?: BeforeMiddleware<T, TShrextContext>
-  after?: AfterMiddleware<T, TShrextContext>
-  onError?: OnErrorMiddleware<T, TShrextContext>
+export type ContextWithArgs<T extends AnyFunc, TMiddlewareContext = object> = TMiddlewareContext & {
+  args: Parameters<T>
 }
 
-export type ShrextHandler<TFunction extends FunctionWithContext, TShrextContext = object> = {
-  (ctx: ContextOf<TFunction>): ReturnType<TFunction> | Promise<ReturnType<TFunction>>
+export type Handler<T extends AnyFunc, TMiddlewareContext = object> = (
+  context: ContextWithArgs<T, TMiddlewareContext>,
+) => ReturnType<T>
+
+export type BeforeMiddleware<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
+  context: ContextWithArgs<T, TMiddlewareContext>,
+) => void | Promise<void | Awaited<ReturnType<T>>>
+
+export type AfterMiddleware<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
+  prevResult: Awaited<ReturnType<T>>,
+  context: ContextWithArgs<T, TMiddlewareContext>,
+) => ReturnType<T> | Promise<ReturnType<T>>
+
+export type OnErrorMiddleware<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
+  error: unknown,
+  context: ContextWithArgs<T, TMiddlewareContext>,
+) => void | Awaited<ReturnType<T>> | Promise<void | Awaited<ReturnType<T>>>
+
+export type MiddlewareObject<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = {
+  before?: BeforeMiddleware<T, TMiddlewareContext>
+  after?: AfterMiddleware<T, TMiddlewareContext>
+  onError?: OnErrorMiddleware<T, TMiddlewareContext>
+}
+
+export type ShrextHandler<TFunction extends AnyFunc, TMiddlewareContext = object> = {
+  (...args: Parameters<TFunction>): ReturnType<TFunction> | Promise<ReturnType<TFunction>>
   use: (
-    middlewareObject: MiddlewareObject<TFunction, TShrextContext>,
-  ) => ShrextHandler<TFunction, TShrextContext>
+    middlewareObject: MiddlewareObject<TFunction, TMiddlewareContext>,
+  ) => ShrextHandler<TFunction, TMiddlewareContext>
   before: (
-    beforeMiddleware: BeforeMiddleware<TFunction, TShrextContext>,
-  ) => ShrextHandler<TFunction, TShrextContext>
+    beforeMiddleware: BeforeMiddleware<TFunction, TMiddlewareContext>,
+  ) => ShrextHandler<TFunction, TMiddlewareContext>
   after: (
-    afterMiddleware: AfterMiddleware<TFunction, TShrextContext>,
-  ) => ShrextHandler<TFunction, TShrextContext>
+    afterMiddleware: AfterMiddleware<TFunction, TMiddlewareContext>,
+  ) => ShrextHandler<TFunction, TMiddlewareContext>
   onError: (
-    onErrorMiddleware: OnErrorMiddleware<TFunction, TShrextContext>,
-  ) => ShrextHandler<TFunction, TShrextContext>
+    onErrorMiddleware: OnErrorMiddleware<TFunction, TMiddlewareContext>,
+  ) => ShrextHandler<TFunction, TMiddlewareContext>
+  handler: (
+    handler: Handler<TFunction, TMiddlewareContext>,
+  ) => ShrextHandler<TFunction, TMiddlewareContext>
 }
