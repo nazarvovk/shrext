@@ -10,5 +10,7 @@ exports.default = {
     format: 'cjs',
     sourcemap: true,
   },
-  plugins: [typescript()],
+  plugins: [typescript({
+    exclude: ["**/*.test.ts"]
+  })],
 }
