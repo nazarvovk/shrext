@@ -33,9 +33,14 @@ export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
       }
       return result
     } catch (error) {
+      let additionalErrors: unknown[] = [] // errors thrown by onError middlewares
       for (const onErrorMiddleware of onErrorMiddlewares) {
-        const result = await onErrorMiddleware(error, middlewareContext)
-        if (result) return result
+        try {
+          const result = await onErrorMiddleware(error, middlewareContext, additionalErrors)
+          if (result) return result
+        } catch (error) {
+          additionalErrors = [...additionalErrors, error]
+        }
       }
       throw error
     }

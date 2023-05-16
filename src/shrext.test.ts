@@ -60,17 +60,51 @@ describe(`${shrext.name}`, () => {
 
   describe('onError middleware', () => {
     it('should be called', async () => {
-      const onErrorMiddleware = jest.fn((error) => {
+      const onErrorMiddleware0 = jest.fn()
+      const onErrorMiddleware1 = jest.fn((error) => {
         return { addedOnError: 'yes', error }
       })
+
       const handler = jest.fn(() => {
         throw new Error('test')
       })
       const shrextHandler = shrext(handler)
-      shrextHandler.onError(onErrorMiddleware)
+      shrextHandler.onError(onErrorMiddleware0)
+      shrextHandler.onError(onErrorMiddleware1)
       const res = await shrextHandler({})
-      expect(onErrorMiddleware).toHaveBeenCalled()
-      expect(onErrorMiddleware).toHaveBeenCalledWith(expect.any(Error), { args: [{}] })
+      expect(onErrorMiddleware1).toHaveBeenCalledWith(expect.any(Error), { args: [{}] }, [])
+      expect(onErrorMiddleware1).toHaveBeenCalled()
+      expect(onErrorMiddleware1).toHaveBeenCalledWith(expect.any(Error), { args: [{}] }, [])
+      expect(handler).toHaveBeenCalled()
+      expect(res).toMatchInlineSnapshot(`
+        {
+          "addedOnError": "yes",
+          "error": [Error: test],
+        }
+      `)
+    })
+
+    it('should pass to the next onError middleware if one throws', async () => {
+      const handler = jest.fn(() => {
+        throw new Error('test')
+      })
+
+      const onErrorMiddleware0 = jest.fn(() => {
+        throw new Error('middleware error')
+      })
+      const onErrorMiddleware1 = jest.fn((error) => {
+        return { addedOnError: 'yes', error }
+      })
+
+      const shrextHandler = shrext(handler).onError(onErrorMiddleware0).onError(onErrorMiddleware1)
+      const res = await shrextHandler({})
+
+      expect(onErrorMiddleware0).toHaveBeenCalledTimes(1)
+      expect(onErrorMiddleware0).toHaveBeenCalledWith(expect.any(Error), { args: [{}] }, [])
+      expect(onErrorMiddleware1).toHaveBeenCalledTimes(1)
+      expect(onErrorMiddleware1).toHaveBeenCalledWith(expect.any(Error), { args: [{}] }, [
+        expect.any(Error),
+      ])
       expect(handler).toHaveBeenCalled()
       expect(res).toMatchInlineSnapshot(`
         {

@@ -20,6 +20,7 @@ export type AfterMiddleware<T extends AnyFunc = AnyFunc, TMiddlewareContext = ob
 export type OnErrorMiddleware<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
   error: unknown,
   context: ContextWithArgs<T, TMiddlewareContext>,
+  additionalErrors?: unknown[],
 ) => void | Awaited<ReturnType<T>> | Promise<void | Awaited<ReturnType<T>>>
 
 export type MiddlewareObject<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = {
