@@ -1,6 +1,6 @@
 {
   "name": "shrext",
-  "version": "0.4.0-rc.1",
+  "version": "0.4.0-rc.2",
   "description": "Middleware for Next.js data fetching functions",
   "main": "lib/index.js",
   "files": [

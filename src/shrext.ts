@@ -61,7 +61,7 @@ export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
     return shrextHandler
   }
   shrextHandler.onError = (onErrorMiddleware) => {
-    onErrorMiddlewares.push(onErrorMiddleware)
+    onErrorMiddlewares.unshift(onErrorMiddleware)
     return shrextHandler
   }
   shrextHandler.handler = (newHandler) => {
