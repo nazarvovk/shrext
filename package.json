@@ -1,7 +1,7 @@
 {
   "name": "shrext",
-  "version": "0.4.0-rc.2",
-  "description": "Middleware for Next.js data fetching functions",
+  "version": "0.4.0",
+  "description": "Simple middleware engine",
   "main": "lib/index.js",
   "files": [
     "lib/**/*"
@@ -14,9 +14,9 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "keywords": [
-    "Next.js",
     "typescript",
-    "middleware"
+    "middleware",
+    "Next.js"
   ],
   "author": {
     "name": "Nazar Vovk",
