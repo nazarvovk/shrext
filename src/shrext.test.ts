@@ -96,7 +96,10 @@ describe(`${shrext.name}`, () => {
         return { addedOnError: 'yes', error }
       })
 
-      const shrextHandler = shrext(handler).onError(onErrorMiddleware0).onError(onErrorMiddleware1)
+      const shrextHandler = shrext(handler)
+        // the order of onError is reversed (last attached gets called first), same as after middleware. So we attach it in reverse order
+        .onError(onErrorMiddleware1)
+        .onError(onErrorMiddleware0)
       const res = await shrextHandler({})
 
       expect(onErrorMiddleware0).toHaveBeenCalledTimes(1)
