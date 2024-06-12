@@ -118,6 +118,46 @@ describe(`${shrext.name}`, () => {
     })
   })
 
+  describe('remove middleware', () => {
+    it("doesn't call the removed middleware", async () => {
+      const beforeMiddleware = jest.fn()
+      const handler = jest.fn()
+      const shrextHandler = shrext(handler).before(beforeMiddleware, { id: 'test' })
+
+      shrextHandler.remove('test')
+      await shrextHandler({})
+
+      expect(beforeMiddleware).not.toHaveBeenCalled()
+      expect(handler).toHaveBeenCalled()
+    })
+
+    it('removes only the specified middlewares', async () => {
+      const beforeMiddleware = jest.fn()
+      const afterMiddleware = jest.fn()
+      const onErrorMiddleware = jest.fn()
+      const handler = jest.fn(() => {
+        throw new Error('test error') // trigger onError
+      })
+      const shrextHandler = shrext(handler).use(
+        {
+          before: beforeMiddleware,
+          after: afterMiddleware,
+          onError: onErrorMiddleware,
+        },
+        { id: 'test' },
+      )
+
+      shrextHandler.remove('test', { before: true, after: true })
+
+      await expect(shrextHandler({})).rejects.toThrow('test error')
+
+      expect(beforeMiddleware).not.toHaveBeenCalled()
+      expect(afterMiddleware).not.toHaveBeenCalled()
+      expect(handler).toHaveBeenCalled()
+      expect(onErrorMiddleware).toHaveBeenCalled()
+    })
+  })
+
   it('works with api routes', async () => {
     const handler = jest.fn(({ args: [req, res] }) => {
       res.send(req.body)
