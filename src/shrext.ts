@@ -9,13 +9,20 @@ import type {
   MiddlewareEntry,
 } from './types'
 
+type MiddlewareInit<T extends AnyFunc, TMiddlewareContext> = {
+  before: MiddlewareEntry<BeforeMiddlewareFn<T, TMiddlewareContext>>[]
+  after: MiddlewareEntry<AfterMiddlewareFn<T, TMiddlewareContext>>[]
+  onError: MiddlewareEntry<OnErrorMiddlewareFn<T, TMiddlewareContext>>[]
+}
+
 export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
   handler_?: Handler<T, TMiddlewareContext>,
+  middlewares?: MiddlewareInit<T, TMiddlewareContext>,
 ): ShrextHandler<T, TMiddlewareContext> => {
   let handler = handler_
-  let beforeMiddlewares: MiddlewareEntry<BeforeMiddlewareFn<T, TMiddlewareContext>>[] = []
-  let afterMiddlewares: MiddlewareEntry<AfterMiddlewareFn<T, TMiddlewareContext>>[] = []
-  let onErrorMiddlewares: MiddlewareEntry<OnErrorMiddlewareFn<T, TMiddlewareContext>>[] = []
+  let beforeMiddlewares = [...(middlewares?.before ?? [])]
+  let afterMiddlewares = [...(middlewares?.after ?? [])]
+  let onErrorMiddlewares = [...(middlewares?.onError ?? [])]
 
   const shrextHandler: ShrextHandler<T, TMiddlewareContext> = async (...args: Parameters<T>) => {
     if (!handler) throw new Error('Handler is not defined.')
@@ -80,6 +87,12 @@ export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
       onErrorMiddlewares = onErrorMiddlewares.filter((middleware) => middleware.options?.id !== id)
     }
   }
-
+  shrextHandler.clone = () => {
+    return shrext(handler, {
+      before: beforeMiddlewares,
+      after: afterMiddlewares,
+      onError: onErrorMiddlewares,
+    })
+  }
   return shrextHandler
 }

@@ -158,6 +158,42 @@ describe(`${shrext.name}`, () => {
     })
   })
 
+  describe('clone', () => {
+    it('should mutate the instance and call both middlewares', async () => {
+      const handler = jest.fn()
+      const afterMiddleware = jest.fn()
+      const shrextHandler = shrext(handler)
+      shrextHandler.after(afterMiddleware)
+
+      const afterMiddleware2 = jest.fn()
+      // the instance is reused and mutated
+      const newHandler = shrextHandler.after(afterMiddleware2)
+
+      await newHandler()
+
+      expect(handler).toHaveBeenCalled()
+      expect(afterMiddleware).toHaveBeenCalled()
+      expect(afterMiddleware2).toHaveBeenCalled()
+    })
+
+    it('should clone the instance and call both middlewares', async () => {
+      const handler = jest.fn()
+      const afterMiddleware = jest.fn()
+      const shrextHandler = shrext(handler)
+      // clone the instance before mutating
+      shrextHandler.clone().after(afterMiddleware)
+
+      const afterMiddleware2 = jest.fn()
+      const newHandler = shrextHandler.after(afterMiddleware2)
+
+      await newHandler()
+
+      expect(handler).toHaveBeenCalled()
+      expect(afterMiddleware).not.toHaveBeenCalled()
+      expect(afterMiddleware2).toHaveBeenCalled()
+    })
+  })
+
   it('works with api routes', async () => {
     const handler = jest.fn(({ args: [req, res] }) => {
       res.send(req.body)

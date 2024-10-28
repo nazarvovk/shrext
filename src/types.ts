@@ -65,4 +65,5 @@ export type ShrextHandler<TFunction extends AnyFunc, TMiddlewareContext = object
     handler: Handler<TFunction, TMiddlewareContext>,
   ) => ShrextHandler<TFunction, TMiddlewareContext>
   remove: (id: string, options?: RemoveOptions) => void
+  clone: () => ShrextHandler<TFunction, TMiddlewareContext>
 }
