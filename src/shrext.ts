@@ -58,7 +58,7 @@ export const shrext = <T extends AnyFunc, TContext>(
     state.handler = newHandler
     return instance
   }
-  instance.remove = function (id, options) {
+  instance.remove = (id, options) => {
     if (!options || options.before) {
       state.before = state.before.filter((middleware) => middleware.options?.id !== id)
     }
