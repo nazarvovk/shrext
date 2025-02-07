@@ -1,51 +1,41 @@
-import type {
-  BeforeMiddlewareFn,
-  AfterMiddlewareFn,
-  OnErrorMiddlewareFn,
-  ShrextHandler,
-  Handler,
-  AnyFunc,
-  ContextWithArgs,
-  MiddlewareEntry,
-} from './types'
+import type { Shrext, Handler, AnyFunc, ContextWithArgs, ShrextInstanceState } from './types'
 
-type MiddlewareInit<T extends AnyFunc, TMiddlewareContext> = {
-  before: MiddlewareEntry<BeforeMiddlewareFn<T, TMiddlewareContext>>[]
-  after: MiddlewareEntry<AfterMiddlewareFn<T, TMiddlewareContext>>[]
-  onError: MiddlewareEntry<OnErrorMiddlewareFn<T, TMiddlewareContext>>[]
-}
+const stateFromPartial = <T extends AnyFunc, TMiddlewareContext>(
+  partial?: Partial<ShrextInstanceState<T, TMiddlewareContext>>,
+): ShrextInstanceState<T, TMiddlewareContext> => ({
+  handler: partial?.handler,
+  before: [...(partial?.before ?? [])],
+  after: [...(partial?.after ?? [])],
+  onError: [...(partial?.onError ?? [])],
+})
 
-export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
-  handler_?: Handler<T, TMiddlewareContext>,
-  middlewares?: MiddlewareInit<T, TMiddlewareContext>,
-): ShrextHandler<T, TMiddlewareContext> => {
-  let handler = handler_
-  let beforeMiddlewares = [...(middlewares?.before ?? [])]
-  let afterMiddlewares = [...(middlewares?.after ?? [])]
-  let onErrorMiddlewares = [...(middlewares?.onError ?? [])]
+export const shrext = <T extends AnyFunc, TContext>(
+  init?: Handler<T, TContext> | ShrextInstanceState<T, TContext>,
+): Shrext<T, TContext> => {
+  const state = stateFromPartial(typeof init === 'function' ? { handler: init } : init)
 
-  const shrextHandler: ShrextHandler<T, TMiddlewareContext> = async (...args: Parameters<T>) => {
-    if (!handler) throw new Error('Handler is not defined.')
+  const instance: Shrext<T, TContext> = async (...args: Parameters<T>) => {
+    if (!state.handler) throw new Error('Handler is not defined.')
     const middlewareContext = {
       args,
-    } as ContextWithArgs<T, TMiddlewareContext>
+    } as ContextWithArgs<T, TContext>
 
     try {
-      for (const beforeMiddleware of beforeMiddlewares) {
+      for (const beforeMiddleware of state.before) {
         const result = await beforeMiddleware.fn(middlewareContext)
-        if (result) return result
+        if (result !== undefined) return result
       }
-      let result = await handler(middlewareContext)
-      for (const afterMiddleware of afterMiddlewares) {
+      let result = await state.handler(middlewareContext)
+      for (const afterMiddleware of state.after) {
         result = await afterMiddleware.fn(result, middlewareContext)
       }
       return result
     } catch (error) {
       let additionalErrors: unknown[] = [] // errors thrown by onError middlewares
-      for (const onErrorMiddleware of onErrorMiddlewares) {
+      for (const onErrorMiddleware of state.onError) {
         try {
           const result = await onErrorMiddleware.fn(error, middlewareContext, additionalErrors)
-          if (result) return result
+          if (result !== undefined) return result
         } catch (error) {
           additionalErrors = [...additionalErrors, error]
         }
@@ -53,46 +43,32 @@ export const shrext = <T extends AnyFunc, TMiddlewareContext = object>(
       throw error
     }
   }
-  shrextHandler.use = (middleware, options) => {
+  instance.state = state
+  instance.use = (middleware, options) => {
     const { before, after, onError } = middleware
-    if (before) shrextHandler.before(before, options)
-    if (after) shrextHandler.after(after, options)
-    if (onError) shrextHandler.onError(onError, options)
-    return shrextHandler
+    if (before) state.before.push({ fn: before, options })
+    if (after) state.after.unshift({ fn: after, options })
+    if (onError) state.onError.unshift({ fn: onError, options })
+    return instance
   }
-  shrextHandler.before = (fn, options) => {
-    beforeMiddlewares.push({ fn, options })
-    return shrextHandler
+  instance.before = (before, options) => instance.use({ before }, options)
+  instance.after = (after, options) => instance.use({ after }, options)
+  instance.onError = (onError, options) => instance.use({ onError }, options)
+  instance.handler = (newHandler) => {
+    state.handler = newHandler
+    return instance
   }
-  shrextHandler.after = (fn, options) => {
-    afterMiddlewares.unshift({ fn, options })
-    return shrextHandler
-  }
-  shrextHandler.onError = (fn, options) => {
-    onErrorMiddlewares.unshift({ fn, options })
-    return shrextHandler
-  }
-  shrextHandler.handler = (newHandler) => {
-    handler = newHandler
-    return shrextHandler
-  }
-  shrextHandler.remove = (id, options) => {
+  instance.remove = function (id, options) {
     if (!options || options.before) {
-      beforeMiddlewares = beforeMiddlewares.filter((middleware) => middleware.options?.id !== id)
+      state.before = state.before.filter((middleware) => middleware.options?.id !== id)
     }
     if (!options || options.after) {
-      afterMiddlewares = afterMiddlewares.filter((middleware) => middleware.options?.id !== id)
+      state.after = state.after.filter((middleware) => middleware.options?.id !== id)
     }
     if (!options || options.onError) {
-      onErrorMiddlewares = onErrorMiddlewares.filter((middleware) => middleware.options?.id !== id)
+      state.onError = state.onError.filter((middleware) => middleware.options?.id !== id)
     }
   }
-  shrextHandler.clone = () => {
-    return shrext(handler, {
-      before: beforeMiddlewares,
-      after: afterMiddlewares,
-      onError: onErrorMiddlewares,
-    })
-  }
-  return shrextHandler
+  instance.clone = () => shrext(state)
+  return instance
 }

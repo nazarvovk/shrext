@@ -1,36 +1,36 @@
 export type AnyFunc = (...args: any[]) => any
 
-export type ContextWithArgs<T extends AnyFunc, TMiddlewareContext = object> = TMiddlewareContext & {
+export type ContextWithArgs<T extends AnyFunc, TContext = object> = TContext & {
   args: Parameters<T>
 }
 
-export type Handler<T extends AnyFunc, TMiddlewareContext = object> = (
-  context: ContextWithArgs<T, TMiddlewareContext>,
+export type Handler<T extends AnyFunc, TContext = object> = (
+  context: ContextWithArgs<T, TContext>,
 ) => ReturnType<T>
 
-export type BeforeMiddlewareFn<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
-  context: ContextWithArgs<T, TMiddlewareContext>,
+export type BeforeMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
+  context: ContextWithArgs<T, TContext>,
 ) => void | Promise<void | Awaited<ReturnType<T>>>
 
-export type AfterMiddlewareFn<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
+export type AfterMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
   prevResult: Awaited<ReturnType<T>>,
-  context: ContextWithArgs<T, TMiddlewareContext>,
+  context: ContextWithArgs<T, TContext>,
 ) => ReturnType<T> | Promise<ReturnType<T>>
 
-export type OnErrorMiddlewareFn<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = (
+export type OnErrorMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
   error: unknown,
-  context: ContextWithArgs<T, TMiddlewareContext>,
+  context: ContextWithArgs<T, TContext>,
   additionalErrors?: unknown[],
 ) => void | Awaited<ReturnType<T>> | Promise<void | Awaited<ReturnType<T>>>
 
-export type MiddlewareEntry<T> = { fn: T; options?: MiddlewareOptions }
+export type Middleware<T> = { fn: T; options?: MiddlewareOptions }
 
-export type MiddlewareInput<T extends AnyFunc = AnyFunc> = T | MiddlewareEntry<T>
+export type MiddlewareInput<TFunc extends AnyFunc = AnyFunc> = TFunc | Middleware<TFunc>
 
-export type MiddlewareFnObject<T extends AnyFunc = AnyFunc, TMiddlewareContext = object> = {
-  before?: BeforeMiddlewareFn<T, TMiddlewareContext>
-  after?: AfterMiddlewareFn<T, TMiddlewareContext>
-  onError?: OnErrorMiddlewareFn<T, TMiddlewareContext>
+export type MiddlewareFnObject<T extends AnyFunc = AnyFunc, TContext = object> = {
+  before?: BeforeMiddlewareFn<T, TContext>
+  after?: AfterMiddlewareFn<T, TContext>
+  onError?: OnErrorMiddlewareFn<T, TContext>
 }
 
 export type MiddlewareOptions = {
@@ -43,27 +43,33 @@ export type RemoveOptions = {
   onError?: boolean
 }
 
-export type ShrextHandler<TFunction extends AnyFunc, TMiddlewareContext = object> = {
+export type ShrextInstanceState<THandler extends AnyFunc, TContext> = {
+  handler: Handler<THandler, TContext> | undefined
+  before: Middleware<BeforeMiddlewareFn<THandler, TContext>>[]
+  after: Middleware<AfterMiddlewareFn<THandler, TContext>>[]
+  onError: Middleware<OnErrorMiddlewareFn<THandler, TContext>>[]
+}
+
+export type Shrext<TFunction extends AnyFunc, TContext = object> = {
   (...args: Parameters<TFunction>): ReturnType<TFunction> | Promise<ReturnType<TFunction>>
+  state: ShrextInstanceState<TFunction, TContext>
   use: (
-    middlewareObject: MiddlewareFnObject<TFunction, TMiddlewareContext>,
+    middlewareObject: MiddlewareFnObject<TFunction, TContext>,
     options?: MiddlewareOptions,
-  ) => ShrextHandler<TFunction, TMiddlewareContext>
+  ) => Shrext<TFunction, TContext>
   before: (
-    beforeMiddleware: BeforeMiddlewareFn<TFunction, TMiddlewareContext>,
+    beforeMiddleware: BeforeMiddlewareFn<TFunction, TContext>,
     options?: MiddlewareOptions,
-  ) => ShrextHandler<TFunction, TMiddlewareContext>
+  ) => Shrext<TFunction, TContext>
   after: (
-    afterMiddleware: AfterMiddlewareFn<TFunction, TMiddlewareContext>,
+    afterMiddleware: AfterMiddlewareFn<TFunction, TContext>,
     options?: MiddlewareOptions,
-  ) => ShrextHandler<TFunction, TMiddlewareContext>
+  ) => Shrext<TFunction, TContext>
   onError: (
-    onErrorMiddleware: OnErrorMiddlewareFn<TFunction, TMiddlewareContext>,
+    onErrorMiddleware: OnErrorMiddlewareFn<TFunction, TContext>,
     options?: MiddlewareOptions,
-  ) => ShrextHandler<TFunction, TMiddlewareContext>
-  handler: (
-    handler: Handler<TFunction, TMiddlewareContext>,
-  ) => ShrextHandler<TFunction, TMiddlewareContext>
+  ) => Shrext<TFunction, TContext>
+  handler: (handler: Handler<TFunction, TContext>) => Shrext<TFunction, TContext>
   remove: (id: string, options?: RemoveOptions) => void
-  clone: () => ShrextHandler<TFunction, TMiddlewareContext>
+  clone: () => Shrext<TFunction, TContext>
 }
