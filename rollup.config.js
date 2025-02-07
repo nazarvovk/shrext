@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const typescript = require('@rollup/plugin-typescript')
 
 /**
@@ -10,7 +11,9 @@ exports.default = {
     format: 'cjs',
     sourcemap: true,
   },
-  plugins: [typescript({
-    exclude: ["**/*.test.ts"]
-  })],
+  plugins: [
+    typescript({
+      exclude: ['**/*.test.ts'],
+    }),
+  ],
 }

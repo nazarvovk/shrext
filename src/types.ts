@@ -1,4 +1,4 @@
-export type AnyFunc = (...args: any[]) => any
+export type AnyFunc = (...args: unknown[]) => unknown
 
 export type ContextWithArgs<T extends AnyFunc, TContext = object> = TContext & {
   args: Parameters<T>
