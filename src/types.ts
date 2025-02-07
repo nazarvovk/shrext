@@ -69,7 +69,7 @@ export type Shrext<TFunction extends AnyFunc, TContext = object> = {
     onErrorMiddleware: OnErrorMiddlewareFn<TFunction, TContext>,
     options?: MiddlewareOptions,
   ) => Shrext<TFunction, TContext>
-  handler: (handler: Handler<TFunction, TContext>) => Shrext<TFunction, TContext>
+  setHandler: (handler: Handler<TFunction, TContext>) => Shrext<TFunction, TContext>
   remove: (id: string, options?: RemoveOptions) => void
   clone: () => Shrext<TFunction, TContext>
 }

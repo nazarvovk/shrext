@@ -10,7 +10,7 @@ describe('before middleware', () => {
   it('should be called', async () => {
     const beforeMiddleware = jest.fn()
     const handler = jest.fn()
-    const shrextHandler = shrext().before(beforeMiddleware).handler(handler)
+    const shrextHandler = shrext().before(beforeMiddleware).setHandler(handler)
 
     await shrextHandler({})
     expect(beforeMiddleware).toHaveBeenCalled()

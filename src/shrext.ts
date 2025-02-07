@@ -54,7 +54,7 @@ export const shrext = <T extends AnyFunc, TContext>(
   instance.before = (before, options) => instance.use({ before }, options)
   instance.after = (after, options) => instance.use({ after }, options)
   instance.onError = (onError, options) => instance.use({ onError }, options)
-  instance.handler = (newHandler) => {
+  instance.setHandler = (newHandler) => {
     state.handler = newHandler
     return instance
   }
