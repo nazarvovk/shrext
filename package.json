@@ -1,6 +1,6 @@
 {
   "name": "shrext",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Simple middleware engine",
   "files": [
     "dist",

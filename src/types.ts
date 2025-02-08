@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyFunc = (...args: any[]) => unknown
+export type AnyFunc = (...args: any[]) => any
 
 export type ContextWithArgs<T extends AnyFunc, TContext = object> = TContext & {
   args: Parameters<T>
