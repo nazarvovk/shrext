@@ -1,27 +1,24 @@
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-import { FlatCompat } from '@eslint/eslintrc'
+import globals from 'globals'
+import pluginJs from '@eslint/js'
 import tseslint from 'typescript-eslint'
+import pluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import pluginJest from 'eslint-plugin-jest'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-})
-
-const eslintConfig = [
+/** @type {import('eslint').Linter.Config[]} */
+export default [
+  {
+    files: ['src/**/*.ts'],
+  },
+  {
+    ignores: ['dist/'],
+  },
+  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
+  pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
-  ...compat.config({
-    parserOptions: {
-      projectService: true,
-      tsconfigRootDir: import.meta.dirname,
-    },
-  }),
-  ...compat.config({
-    plugins: ['prettier'],
-    extends: 'prettier',
+  {
+    ...pluginPrettierRecommended,
     rules: {
+      ...pluginPrettierRecommended.rules,
       'prettier/prettier': [
         'error',
         {
@@ -34,11 +31,9 @@ const eslintConfig = [
         },
       ],
     },
-  }),
-  ...compat.config({
-    extends: 'plugin:jest/recommended',
-  }),
-  ...compat.config({
+  },
+  pluginJest.configs['flat/recommended'],
+  {
     rules: {
       'no-console': [
         'warn',
@@ -46,12 +41,9 @@ const eslintConfig = [
           allow: ['warn', 'error'],
         },
       ],
-      'no-unused-vars': 'off',
       'no-debugger': 'error',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn'],
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['error'],
     },
-  }),
+  },
 ]
-
-export default eslintConfig
