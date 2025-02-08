@@ -1,6 +1,6 @@
-import type { Shrext, Handler, AnyFunc, ContextWithArgs, ShrextInstanceState } from './types'
+import type { Shrext, Handler, AnyFunc, WithArgs, ShrextInstanceState } from './types'
 
-const stateFromPartial = <T extends AnyFunc, TMiddlewareContext>(
+const stateFromPartial = <T extends AnyFunc, TMiddlewareContext extends object>(
   partial?: Partial<ShrextInstanceState<T, TMiddlewareContext>>,
 ): ShrextInstanceState<T, TMiddlewareContext> => ({
   handler: partial?.handler,
@@ -9,7 +9,7 @@ const stateFromPartial = <T extends AnyFunc, TMiddlewareContext>(
   onError: [...(partial?.onError ?? [])],
 })
 
-export const shrext = <T extends AnyFunc, TContext>(
+export const shrext = <T extends AnyFunc = AnyFunc, TContext extends object = object>(
   init?: Handler<T, TContext> | ShrextInstanceState<T, TContext>,
 ): Shrext<T, TContext> => {
   const state = stateFromPartial(typeof init === 'function' ? { handler: init } : init)
@@ -18,7 +18,7 @@ export const shrext = <T extends AnyFunc, TContext>(
     if (!state.handler) throw new Error('Handler is not defined.')
     const middlewareContext = {
       args,
-    } as ContextWithArgs<T, TContext>
+    } as WithArgs<TContext, Parameters<T>>
 
     try {
       for (const beforeMiddleware of state.before) {

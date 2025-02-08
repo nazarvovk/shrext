@@ -1,34 +1,36 @@
+type MaybePromise<T> = Awaited<T> | Promise<Awaited<T>>
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyFunc = (...args: any[]) => any
 
-export type ContextWithArgs<T extends AnyFunc, TContext = object> = TContext & {
-  args: Parameters<T>
+export type WithArgs<TBase extends object, TArgs extends unknown[]> = TBase & {
+  args: TArgs
 }
 
-export type Handler<T extends AnyFunc, TContext = object> = (
-  context: ContextWithArgs<T, TContext>,
+export type Handler<T extends AnyFunc, TContext extends object = object> = (
+  context: WithArgs<TContext, Parameters<T>>,
 ) => ReturnType<T>
 
-export type BeforeMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
-  context: ContextWithArgs<T, TContext>,
-) => void | Promise<void | Awaited<ReturnType<T>>>
+export type BeforeMiddlewareFn<T extends AnyFunc = AnyFunc, TContext extends object = object> = (
+  context: WithArgs<TContext, Parameters<T>>,
+) => MaybePromise<void | ReturnType<T>>
 
-export type AfterMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
+export type AfterMiddlewareFn<T extends AnyFunc = AnyFunc, TContext extends object = object> = (
   prevResult: Awaited<ReturnType<T>>,
-  context: ContextWithArgs<T, TContext>,
-) => ReturnType<T> | Promise<ReturnType<T>>
+  context: WithArgs<TContext, Parameters<T>>,
+) => MaybePromise<ReturnType<T>>
 
-export type OnErrorMiddlewareFn<T extends AnyFunc = AnyFunc, TContext = object> = (
+export type OnErrorMiddlewareFn<T extends AnyFunc = AnyFunc, TContext extends object = object> = (
   error: unknown,
-  context: ContextWithArgs<T, TContext>,
+  context: WithArgs<TContext, Parameters<T>>,
   additionalErrors?: unknown[],
-) => void | Awaited<ReturnType<T>> | Promise<void | Awaited<ReturnType<T>>>
+) => MaybePromise<void | Awaited<ReturnType<T>>>
 
 export type Middleware<T> = { fn: T; options?: MiddlewareOptions }
 
 export type MiddlewareInput<TFunc extends AnyFunc = AnyFunc> = TFunc | Middleware<TFunc>
 
-export type MiddlewareFnObject<T extends AnyFunc = AnyFunc, TContext = object> = {
+export type MiddlewareFnObject<T extends AnyFunc = AnyFunc, TContext extends object = object> = {
   before?: BeforeMiddlewareFn<T, TContext>
   after?: AfterMiddlewareFn<T, TContext>
   onError?: OnErrorMiddlewareFn<T, TContext>
@@ -44,33 +46,21 @@ export type RemoveOptions = {
   onError?: boolean
 }
 
-export type ShrextInstanceState<THandler extends AnyFunc, TContext> = {
-  handler: Handler<THandler, TContext> | undefined
-  before: Middleware<BeforeMiddlewareFn<THandler, TContext>>[]
-  after: Middleware<AfterMiddlewareFn<THandler, TContext>>[]
-  onError: Middleware<OnErrorMiddlewareFn<THandler, TContext>>[]
+export type ShrextInstanceState<T extends AnyFunc, TContext extends object> = {
+  handler: Handler<T, TContext> | undefined
+  before: Middleware<BeforeMiddlewareFn<T, TContext>>[]
+  after: Middleware<AfterMiddlewareFn<T, TContext>>[]
+  onError: Middleware<OnErrorMiddlewareFn<T, TContext>>[]
 }
 
-export type Shrext<TFunction extends AnyFunc, TContext = object> = {
-  (...args: Parameters<TFunction>): ReturnType<TFunction> | Promise<ReturnType<TFunction>>
-  state: ShrextInstanceState<TFunction, TContext>
-  use: (
-    middlewareObject: MiddlewareFnObject<TFunction, TContext>,
-    options?: MiddlewareOptions,
-  ) => Shrext<TFunction, TContext>
-  before: (
-    beforeMiddleware: BeforeMiddlewareFn<TFunction, TContext>,
-    options?: MiddlewareOptions,
-  ) => Shrext<TFunction, TContext>
-  after: (
-    afterMiddleware: AfterMiddlewareFn<TFunction, TContext>,
-    options?: MiddlewareOptions,
-  ) => Shrext<TFunction, TContext>
-  onError: (
-    onErrorMiddleware: OnErrorMiddlewareFn<TFunction, TContext>,
-    options?: MiddlewareOptions,
-  ) => Shrext<TFunction, TContext>
-  setHandler: (handler: Handler<TFunction, TContext>) => Shrext<TFunction, TContext>
+export interface Shrext<T extends AnyFunc = AnyFunc, TContext extends object = object> {
+  (...args: Parameters<T>): Promise<ReturnType<T>>
+  state: ShrextInstanceState<T, TContext>
+  use: (middlewareObject: MiddlewareFnObject<T, TContext>, options?: MiddlewareOptions) => this
+  before: (fn: BeforeMiddlewareFn<T, TContext>, options?: MiddlewareOptions) => this
+  after: (fn: AfterMiddlewareFn<T, TContext>, options?: MiddlewareOptions) => this
+  onError: (fn: OnErrorMiddlewareFn<T, TContext>, options?: MiddlewareOptions) => this
+  setHandler: (handler: Handler<T, TContext>) => this
   remove: (id: string, options?: RemoveOptions) => void
-  clone: () => Shrext<TFunction, TContext>
+  clone: () => Shrext<T, TContext>
 }
