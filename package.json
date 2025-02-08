@@ -2,14 +2,15 @@
   "name": "shrext",
   "version": "0.6.0",
   "description": "Simple middleware engine",
-  "main": "lib/index.js",
+  "main": "dist/index.js",
   "files": [
-    "lib/**/*"
+    "dist",
+    "src"
   ],
   "scripts": {
     "prepublishOnly": "pnpm run build",
-    "clean": "rm -rf coverage lib node_modules/",
-    "build": "rm -rf lib && rollup -c rollup.config.js",
+    "clean": "rm -rf dist",
+    "build": "pnpm clean && tsup src/index.ts",
     "test": "jest",
     "lint": "eslint"
   },
@@ -24,20 +25,17 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-typescript": "12.1.2",
+    "@eslint/js": "^9.20.0",
     "@types/eslint__eslintrc": "2.1.2",
     "@types/jest": "29.5.14",
     "@types/node": "20.14.8",
-    "@typescript-eslint/eslint-plugin": "8.23.0",
-    "@typescript-eslint/parser": "8.23.0",
     "eslint": "9.20.0",
-    "eslint-config-prettier": "10.0.1",
     "eslint-plugin-jest": "28.11.0",
     "eslint-plugin-prettier": "5.2.3",
+    "globals": "^15.14.0",
     "jest": "30.0.0-alpha.7",
     "prettier": "3.4.2",
-    "rollup": "4.34.6",
-    "ts-jest": "29.2.5",
+    "tsup": "^8.3.6",
     "typescript": "5.7.3",
     "typescript-eslint": "^8.23.0"
   }

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "./lib",
+    "outDir": "./dist",
     "strict": true,
     "strictNullChecks": true,
     "experimentalDecorators": true,
@@ -17,21 +17,12 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "lib": [
-      "es2022",
-    ],
   },
   "include": [
-    "src/**/*",
-    "eslint.config.mjs",
-    "jest.config.js",
-    "rollup.config.js",
+    "src",
   ],
   "exclude": [
     "node_modules",
-    "lib"
+    "dist"
   ]
 }
