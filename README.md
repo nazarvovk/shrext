@@ -1,132 +1,112 @@
-# Shrext - simple middleware ~~for Next.js Data Fetching Functions~~.
-<!-- badges -->
-[![npm version](https://badge.fury.io/js/shrext.svg)](https://badge.fury.io/js/shrext)
+# Shrext
 
+[![npm version](https://img.shields.io/npm/v/shrext.svg?maxAge=1000)](https://www.npmjs.com/package/shrext)
+[![Test](https://github.com/nazarvovk/shrext/actions/workflows/test.yml/badge.svg)](https://github.com/nazarvovk/shrext/actions/workflows/test.yml)
+[![npm downloads](https://img.shields.io/npm/dt/shrext.svg?maxAge=1000)](https://www.npmjs.com/package/shrext)
+[![license](https://img.shields.io/npm/l/shrext.svg?maxAge=1000)](https://github.com/nazarvovk/shrext/blob/master/LICENSE)
+
+A dead simple TypeScript middleware engine.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nazarvovk/shrext/main/shrext.jpg" />
+  <img src="shrext.jpg" />
 </p>
 
-Simple tool to make composable middleware, initially designed for Next.js data fetching functions. Inspired by [Middy](https://github.com/middyjs/middy), ~~but like, you know, for Next.js~~.
-**In fact, it can be used with any function now, not just Next's. I'm still keeping the name though, because it's wonderfully stupid.**
-
-> Dreamworks, please don't sue me.
+Shrext is a simple tool that helps you compose reusable middleware. Inspired by [Middy](https://github.com/middyjs/middy), made for *anything,* not just AWS Lambda.
 
 ## Installation
+
+Install using `npm`:
 
 ```bash
 npm install shrext
 ```
-Or use any other package manager, I'm not your mom.
 
 ## Usage
 
-Define a middleware:
+### Basic Example
+
 ```typescript
-import type { MiddlewareObject } from 'shrext'
+import { MiddlewareFnObject, shrext } from './src'
 
-// This is a middleware that adds a database to the context
-// and disconnects it after the handler has run
-const withDatabase: MiddlewareObject = {
-  before: async (context) => {
-    // add the database to the context, so it can be used in the handler and other middleware
-    Object.assign(context, {
-      database: new Database(),
-    })
-  },
-  after: async (result, context) => {
-    // other middleware can modify the context, so we need to check if the database is still there
-    if ('database' in context && context.database instanceof Database) {
-      await context.database.disconnect()
-    }
-  },
-}
-```
+type ApiHandler = (req: { auth_token: string }) => unknown
 
-Then, in the page file:
-```typescript
-import { shrext } from 'shrext'
+type User = { token: string }
+type ContextWithUser = { user: User }
 
-export const getServerSideProps = shrext<GetServerSideProps, { database: Database }>(
-  async (context) => {
-    const { database, args } = context
-    const [{ params }] = args // args is an array of arguments passed to the handler
-
-    const data = await database.getSomething(params?.id)
-
-    return { props: { data } }
-  },
-).use(withDatabase)
-```
-
-Here, used the same way with Next's `getStaticProps` and `getStaticPaths`.
-Adds a prop `withBackground` to the result of `getStaticProps`:
-```typescript
-export const getStaticProps = shrext<GetStaticProps>(
-  async (context) => {
-    // ... something here
-    return { props: { data } }
-  },
-).after((result) => {
-  if ('props' in result) {
-    Object.assign(result.props, { withBackground: true })
-  }
-  return result
+const handler = shrext<ApiHandler, ContextWithUser>((context) => {
+  console.log(context.user.token)
 })
-```
 
-Or here's a handy one, that removes undefined values from props, so Next.js doesn't complain about serialization:
-```typescript
-export function deepOmitUndefinedEntries<T extends object>(object: T): T {
-  const result = Array.isArray(object) ? [] : {}
-  for (const key in object) {
-    const value = object[key]
-    if (typeof value === 'object' && value !== null) {
-      Object.assign(result, { [key]: deepOmitUndefinedEntries(value) })
-    } else if (value !== undefined) {
-      Object.assign(result, { [key]: value })
-    }
-  }
-  return result as T
-}
-
-export const omitUndefined: AfterMiddleware = (result) => {
-  if ('props' in result) {
-    result.props = deepOmitUndefinedEntries(result.props)
-  }
-  return result
-}
-```
-
-Usage:
-```typescript
-export const getStaticProps = shrext<GetStaticProps>(
-  async (context) => {
-    // ... something here
-    return { props: { data: {
-      a: 1,
-      b: undefined,
-      c: {
-        d: 2,
-        e: undefined,
-      },
-    } } }
-  },
-).after(omitUndefined)
-```
-
-Page props will be:
-```typescript
-{
-  data: {
-    a: 1,
-    c: {
-      d: 2,
-    },
+const withUser: MiddlewareFnObject<ApiHandler, ContextWithUser> = {
+  before: async (context) => {
+    const {
+      args: [req],
+    } = context
+    const user: User = await getUser(req.auth_token)
+    Object.assign(context, { user })
   },
 }
+// attach the middleware
+handler.use(withUser)
+
+handler({ auth_token: 'qwerty' })
+// Result: qwerty
 ```
+
+Alternative composition:
+
+```typescript
+shrext<ApiHandler, ContextWithUser>()
+  .use(withUser)
+  .handler()
+```
+
+---
+
+There are three types of middleware: `before`, `after`, and `onError`. All of them receive a `context` object, that by default has an `args` property - array of arguments the handler is called with. You can attach properties to context, as it's passed through the middleware layers.
+
+The middleware call order:
+- `before` - order in which it's attached
+- `after` - reverse attach order
+- `onError` - reverse attach order, like `after`
+
+---
+Some rules and behavior to keep in mind:
+
+  1. Handler and every middleware are always awaited, the call on instance always returns a `Promise`
+  2. The instance returned from `shrext()` is mutable and every method returns self. This allows to chain method calls, as well as compose separately, as shown above. 
+  3. Because of the mutability, you should use `clone()` when reusing and extending shrex handler instances.
+
+
+## API Reference
+
+### `shrext<T extends AnyFunc, TContext>(handler?: Handler<T, TContext>)`
+Creates a Shrext instance.
+
+### `use(middleware: MiddlewareFnObject<TFunction, TContext>, options?: MiddlewareOptions)`
+Attaches a middleware object with `before`, `after`, or `onError` hooks.
+
+### `before(beforeMiddleware: BeforeMiddlewareFn<T, TContext>, options?: MiddlewareOptions)`
+Helper shortcut for `.use({ before })`
+
+### `after(afterMiddleware: AfterMiddlewareFn<T, TContext>, options?: MiddlewareOptions)`
+Helper shortcut for `.use({ after })`
+
+### `onError(onErrorMiddleware: OnErrorMiddlewareFn<T, TContext>, options?: MiddlewareOptions)`
+Helper shortcut for `.use({ onError })`
+
+### `setHandler(handler: Handler<T, TContext>)`
+Set the function handler. Overwrite if it was set previously.
+
+### `remove(id: string, options?: RemoveOptions)`
+Removes middleware by ID. You can pass `id` in `use()` and the helper shortcuts in the second options argument.
+
+Optionally pass options to specify which parts of the middleware to remove.
+
+### `clone()`
+Returns a new instance with the middleware copied, that can be modified independently.
+
 
 ## License
 
-Licensed under [MIT License](LICENSE). Copyright (c) 2023 [Nazar Vovk](https://github.com/nazarvovk).
+Licensed under [MIT License](LICENSE). Copyright (c) 2025 [Nazarii Vovk](https://github.com/nazarvovk).
