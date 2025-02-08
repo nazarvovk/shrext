@@ -1,12 +1,22 @@
 {
   "name": "shrext",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Simple middleware engine",
-  "main": "dist/index.js",
   "files": [
     "dist",
     "src"
   ],
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.mts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/cjs/index.cjs"
+    }
+  },
   "scripts": {
     "prepublishOnly": "pnpm run build",
     "clean": "rm -rf dist",
